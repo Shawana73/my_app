@@ -1,36 +1,36 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'theme.dart';
-import 'screens/splash_screen.dart';
+import 'screens/admin_dashboard_screen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Lock to portrait
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-
-  // Check login state
-  final prefs = await SharedPreferences.getInstance();
-  final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-
-  runApp(DigitalHousingSocietyApp(isLoggedIn: isLoggedIn));
+void main() {
+  runApp(const DigitalHousingApp());
 }
 
-class DigitalHousingSocietyApp extends StatelessWidget {
-  final bool isLoggedIn;
-  const DigitalHousingSocietyApp({super.key, required this.isLoggedIn});
+class DigitalHousingApp extends StatelessWidget {
+  const DigitalHousingApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Digital Housing Society',
+      title: 'Digital Housing Society Admin',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.themeData,
-      home: SplashScreen(isLoggedIn: isLoggedIn),
+      theme: ThemeData(
+        useMaterial3: true,
+        primaryColor: const Color(0xFF7B4DFF),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF7B4DFF),
+          primary: const Color(0xFF7B4DFF),
+          secondary: const Color(0xFF9C6BFF),
+          background: const Color(0xFFF5F3FF),
+        ),
+        fontFamily: 'Inter',
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 2,
+          shadowColor: const Color(0xFF7B4DFF).withOpacity(0.04),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        ),
+      ),
+      home: const AdminDashboardScreen(),
     );
   }
 }
