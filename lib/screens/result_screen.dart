@@ -1,125 +1,246 @@
+// lib/screens/result_screen.dart
+
 import 'package:flutter/material.dart';
-import '../models/society_models.dart';
+import '../theme.dart';
 
 class ResultScreen extends StatefulWidget {
-  const ResultScreen({Key? key}) : super(key: key);
+  const ResultScreen({super.key});
 
   @override
   State<ResultScreen> createState() => _ResultScreenState();
 }
 
 class _ResultScreenState extends State<ResultScreen> {
-  String _query = "";
+  String _searchQuery = '';
+  String _selectedFilter = 'ALL';
 
-  final List<BallotWinner> _winners = [
-    BallotWinner(
-      applicant: Applicant(id: "APP-009", name: "Haroon Rashid", cnic: "35101-2910291-1", email: "h@gmail.com", phone: "+92 3", documentUrl: "", sector: "Sector A", status: ApplicantStatus.verified, applicationDate: ""),
-      plot: Plot(id: "PL-B12", size: "10 Marla", location: "Sector B DHA", price: 5400, description: "", status: PlotStatus.allocated),
-      ballotId: "BAL-90119",
-      drawDate: "2026-06-23",
-    ),
-    BallotWinner(
-      applicant: Applicant(id: "APP-014", name: "Zuhair Gohar", cnic: "35101-2910291-2", email: "z@gmail.com", phone: "+92 4", documentUrl: "", sector: "Sector B", status: ApplicantStatus.verified, applicationDate: ""),
-      plot: Plot(id: "PL-C45", size: "5 Marla", location: "Sector C Exec", price: 3400, description: "", status: PlotStatus.allocated),
-      ballotId: "BAL-90120",
-      drawDate: "2026-06-23",
-    ),
+  final List<Map<String, String>> _winners = [
+    {'name': 'Ayesha Bibi', 'id': 'APP-0991', 'plotNo': 'PL-D77', 'sector': 'Sector D', 'status': 'SELECTED'},
+    {'name': 'Muhammad Ali Raza', 'id': 'APP-4011', 'plotNo': 'PL-A12', 'sector': 'Sector A', 'status': 'SELECTED'},
+    {'name': 'Zainab Fatima', 'id': 'APP-4013', 'plotNo': 'PL-A03', 'sector': 'Sector A', 'status': 'SELECTED'},
+    {'name': 'Bilal Siddique', 'id': 'APP-3082', 'plotNo': 'PL-C15', 'sector': 'Sector C', 'status': 'SELECTED'},
+    {'name': 'Usman Tariq', 'id': 'APP-4025', 'plotNo': 'N/A', 'sector': 'Sector E', 'status': 'NOT_SELECTED'},
   ];
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _winners.where((w) => w.applicant.name.toLowerCase().contains(_query.toLowerCase()) || w.plot.id.toLowerCase().contains(_query.toLowerCase())).toList();
+    final filteredWinners = _winners.where((winner) {
+      final matchesSearch = winner['name']!.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          winner['plotNo']!.toLowerCase().contains(_searchQuery.toLowerCase());
+
+      bool matchesFilter = false;
+      if (_selectedFilter == 'ALL') {
+        matchesFilter = true;
+      } else if (_selectedFilter == 'SELECTED' && winner['status'] == 'SELECTED') {
+        matchesFilter = true;
+      } else if (_selectedFilter == 'NOT_SELECTED' && winner['status'] == 'NOT_SELECTED') {
+        matchesFilter = true;
+      }
+      return matchesSearch && matchesFilter;
+    }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F3FF),
+      backgroundColor: AppTheme.lightLavender,
       appBar: AppBar(
-        title: const Text('Balloting Winners', style: TextStyle(color: Color(0xFF1F1F39), fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1F1F39), size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
+        title: const Text('BALLOTING RESULTS'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.ios_share_outlined, color: Color(0xFF7B4DFF)),
+            icon: const Icon(Icons.share_outlined),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Records exported as CSV.')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Exporting results...')),
+              );
             },
-          )
+          ),
         ],
       ),
       body: Column(
         children: [
+          // Filter & Search box
           Container(
-            color: Colors.white,
             padding: const EdgeInsets.all(20),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(color: const Color(0xFFF5F3FF), borderRadius: BorderRadius.circular(16)),
-              child: TextField(
-                onChanged: (val) {
-                  setState(() {
-                    _query = val;
-                  });
-                },
-                decoration: const InputDecoration(
-                  icon: Icon(Icons.search, color: Color(0xFF8E8EA9)),
-                  hintText: "Search winner name or unit ID...",
-                  border: InputBorder.none,
-                ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
               ),
             ),
-          ),
-          Expanded(
-            child: filtered.isEmpty
-                ? const Center(child: Text('No results draw matches.', style: TextStyle(color: Color(0xFF8E8EA9))))
-                : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              itemCount: filtered.length,
-              itemBuilder: (context, index) {
-                final item = filtered[index];
-                return Container(
-                  margin: const EdgeInsets.only(top: 16),
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(item.ballotId, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF7B4DFF), fontSize: 11)),
-                          const SizedBox(height: 2),
-                          Text(item.applicant.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1F1F39))),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              const Icon(Icons.location_on, size: 12, color: Color(0xFF8E8EA9)),
-                              const SizedBox(width: 4),
-                              Text(item.plot.location, style: const TextStyle(color: Color(0xFF8E8EA9), fontSize: 11)),
-                            ],
-                          )
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: const Color(0xFF7B4DFF).withOpacity(0.08), borderRadius: BorderRadius.circular(16)),
-                        child: Column(
-                          children: [
-                            const Text('PLOT NO', style: TextStyle(fontSize: 8, color: Color(0xFF7B4DFF), fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 2),
-                            Text(item.plot.id, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF7B4DFF))),
-                          ],
-                        ),
-                      )
-                    ],
+            child: Column(
+              children: [
+                // Search Input
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.lightLavender,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                );
+                  child: TextField(
+                    onChanged: (val) {
+                      setState(() {
+                        _searchQuery = val;
+                      });
+                    },
+                    decoration: const InputDecoration(
+                      icon: Icon(Icons.search, color: AppTheme.greyText),
+                      hintText: 'Search winner, plot ID...',
+                      hintStyle: TextStyle(color: AppTheme.greyText),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Tab Filters
+                Row(
+                  children: [
+                    _buildTabFilter('ALL', 'All Draw'),
+                    const SizedBox(width: 8),
+                    _buildTabFilter('SELECTED', 'Selected'),
+                    const SizedBox(width: 8),
+                    _buildTabFilter('NOT_SELECTED', 'Unsuccessful'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Winners List
+          Expanded(
+            child: filteredWinners.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.military_tech_outlined, size: 64, color: AppTheme.greyText),
+                  SizedBox(height: 12),
+                  Text(
+                    'No Results Found',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.darkText),
+                  ),
+                ],
+              ),
+            )
+                : ListView.builder(
+              padding: const EdgeInsets.all(20),
+              itemCount: filteredWinners.length,
+              itemBuilder: (context, index) {
+                final winner = filteredWinners[index];
+                return _buildWinnerCard(winner);
               },
             ),
-          )
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTabFilter(String code, String label) {
+    final isSelected = _selectedFilter == code;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedFilter = code;
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? AppTheme.primaryPurple : AppTheme.lightLavender,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: isSelected ? Colors.white : AppTheme.primaryPurple.withOpacity(0.6),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWinnerCard(Map<String, String> winner) {
+    final isSelected = winner['status'] == 'SELECTED';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: isSelected ? AppTheme.success.withOpacity(0.1) : AppTheme.rejected.withOpacity(0.1),
+                  child: Icon(
+                    isSelected ? Icons.emoji_events_outlined : Icons.sentiment_dissatisfied,
+                    color: isSelected ? AppTheme.success : AppTheme.rejected,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        winner['name']!,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.darkText),
+                      ),
+                      Text(
+                        winner['id']!,
+                        style: const TextStyle(fontSize: 12, color: AppTheme.greyText),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppTheme.success.withOpacity(0.1) : AppTheme.rejected.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    isSelected ? 'SUCCESS' : 'FAILED',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? AppTheme.success : AppTheme.rejected,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (isSelected) ...[
+              const Divider(height: 24, color: AppTheme.lightLavender),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text('ALLOCATED UNIT', style: TextStyle(color: AppTheme.greyText, fontSize: 10, fontWeight: FontWeight.bold)),
+                      SizedBox(height: 4),
+                      Text('PL-D77', style: TextStyle(color: AppTheme.darkText, fontSize: 13, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: const [
+                      Text('BLOCK/SECTOR', style: TextStyle(color: AppTheme.greyText, fontSize: 10, fontWeight: FontWeight.bold)),
+                      SizedBox(height: 4),
+                      Text('Sector D - Premier Block', style: TextStyle(color: AppTheme.darkText, fontSize: 13, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

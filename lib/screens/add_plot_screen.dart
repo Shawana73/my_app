@@ -1,174 +1,231 @@
+// lib/screens/add_plot_screen.dart
+
 import 'package:flutter/material.dart';
-import '../models/society_models.dart';
+import '../theme.dart';
+import '../models.dart';
 
 class AddPlotScreen extends StatefulWidget {
-  const AddPlotScreen({Key? key}) : super(key: key);
+  const AddPlotScreen({super.key});
 
   @override
   State<AddPlotScreen> createState() => _AddPlotScreenState();
 }
-
 class _AddPlotScreenState extends State<AddPlotScreen> {
   final _formKey = GlobalKey<FormState>();
   final _idController = TextEditingController();
   final _sizeController = TextEditingController();
   final _priceController = TextEditingController();
-  final _locController = TextEditingController();
+  final _locationController = TextEditingController();
   final _descController = TextEditingController();
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    _sizeController.dispose();
+    _priceController.dispose();
+    _locationController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F3FF),
+      backgroundColor: AppTheme.lightLavender,
       appBar: AppBar(
-        title: const Text('Add Plot Registry', style: TextStyle(color: Color(0xFF1F1F39), fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1F1F39), size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
+        title: const Text('ADD NEW PLOT'),
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 10),
-                const Text(
-                  'REGISTER NEW PLOT UNIT',
-                  style: TextStyle(color: Color(0xFF8E8EA9), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'PLOT UNIT DETAILS',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.darkText,
+                  letterSpacing: 1.2,
                 ),
-                const SizedBox(height: 16),
-                _buildFormCard(),
-                const SizedBox(height: 28),
-                _buildActionRow(),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+
+              // Form fields card
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      _buildTextField(
+                        controller: _idController,
+                        label: 'Plot Unit ID',
+                        hint: 'e.g. PL-005',
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Plot Unit ID is required';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _sizeController,
+                        label: 'Plot Size',
+                        hint: 'e.g. 5 Marla, 10 Marla, 1 Kanal',
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Plot Size is required';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _priceController,
+                        label: 'Plot Unit Price (PKR)',
+                        hint: 'e.g. 3500 (in Thousands)',
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Price is required';
+                          }
+                          if (double.tryParse(value) == null) {
+                            return 'Enter a valid numeric price';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _locationController,
+                        label: 'Sector & Block Location',
+                        hint: 'e.g. Sector C, DHA Phase 6',
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Location is required';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTextField(
+                        controller: _descController,
+                        label: 'Detailed Description',
+                        hint: 'Describe unique traits of this plot unit...',
+                        maxLines: 3,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Save & Reset Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        _formKey.currentState?.reset();
+                        _idController.clear();
+                        _sizeController.clear();
+                        _priceController.clear();
+                        _locationController.clear();
+                        _descController.clear();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Form cleared')),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppTheme.primaryPurple),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text('Reset Form', style: TextStyle(color: AppTheme.primaryPurple, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (_formKey.currentState?.validate() ?? false) {
+                          final newPlot = Plot(
+                            id: _idController.text.trim(),
+                            size: _sizeController.text.trim(),
+                            location: _locationController.text.trim(),
+                            price: double.parse(_priceController.text.trim()),
+                            status: PlotStatus.available,
+                            description: _descController.text.trim().isEmpty
+                                ? 'No description available'
+                                : _descController.text.trim(),
+                          );
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Plot added to registry successfully!'),
+                              backgroundColor: AppTheme.success,
+                            ),
+                          );
+
+                          Navigator.pop(context, newPlot);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryPurple,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text('Save Plot Unit', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildFormCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          _buildTextField('Plot ID (e.g., PL-102)', _idController, Icons.grid_3x3, (val) {
-            if (val == null || val.trim().isEmpty) return 'Required';
-            return null;
-          }),
-          const SizedBox(height: 16),
-          _buildTextField('Unit Size (e.g., 5 Marla / 1 Kanal)', _sizeController, Icons.aspect_ratio, (val) {
-            if (val == null || val.trim().isEmpty) return 'Required';
-            return null;
-          }),
-          const SizedBox(height: 16),
-          _buildTextField('Base Price (PKR)', _priceController, Icons.monetization_on_outlined, (val) {
-            if (val == null || double.tryParse(val) == null) return 'Enter a valid price';
-            return null;
-          }, keyboardType: TextInputType.number),
-          const SizedBox(height: 16),
-          _buildTextField('Exact Location Address', _locController, Icons.location_on_outlined, (val) {
-            if (val == null || val.trim().isEmpty) return 'Required';
-            return null;
-          }),
-          const SizedBox(height: 16),
-          _buildTextField('Detailed Unit Description', _descController, Icons.article_outlined, null, maxLines: 3),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-      String label,
-      TextEditingController controller,
-      IconData icon,
-      String? Function(String?)? validator, {
-        TextInputType keyboardType = TextInputType.text,
-        int maxLines = 1,
-      }) {
-    return TextFormField(
-      controller: controller,
-      validator: validator,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      style: const TextStyle(color: Color(0xFF1F1F39), fontSize: 14),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF8E8EA9), fontSize: 13),
-        prefixIcon: Icon(icon, color: const Color(0xFF7B4DFF), size: 18),
-        filled: true,
-        fillColor: const Color(0xFFF5F3FF),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF7B4DFF), width: 1.5),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionRow() {
-    return Row(
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                final newPlot = Plot(
-                  id: _idController.text.toUpperCase(),
-                  size: _sizeController.text,
-                  location: _locController.text,
-                  price: double.parse(_priceController.text),
-                  description: _descController.text.isEmpty ? "No description provided." : _descController.text,
-                  status: PlotStatus.available,
-                );
-                Navigator.pop(context, newPlot);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Plot ${newPlot.id} logged to cloud system.'), backgroundColor: const Color(0xFF22C55E)),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF7B4DFF),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              elevation: 0,
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.greyText),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.lightLavender,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            maxLines: maxLines,
+            validator: validator,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(color: AppTheme.greyText, fontSize: 13),
+              border: InputBorder.none,
+              errorStyle: const TextStyle(fontSize: 10, height: 0.8),
             ),
-            child: const Text('Publish Registry', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ),
-        const SizedBox(width: 12),
-        ElevatedButton(
-          onPressed: () {
-            _idController.clear();
-            _sizeController.clear();
-            _priceController.clear();
-            _locController.clear();
-            _descController.clear();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: const Color(0xFF8E8EA9),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            elevation: 0,
-          ),
-          child: const Icon(Icons.refresh),
-        )
       ],
     );
   }

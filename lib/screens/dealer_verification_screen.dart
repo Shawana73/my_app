@@ -1,129 +1,237 @@
+// lib/screens/dealer_verification_screen.dart
+
 import 'package:flutter/material.dart';
-import '../models/society_models.dart';
+import '../theme.dart';
+import '../models.dart';
 
 class DealerVerificationScreen extends StatefulWidget {
-  const DealerVerificationScreen({Key? key}) : super(key: key);
+  const DealerVerificationScreen({super.key});
 
   @override
   State<DealerVerificationScreen> createState() => _DealerVerificationScreenState();
 }
 
 class _DealerVerificationScreenState extends State<DealerVerificationScreen> {
-  String _term = "";
+  String _searchQuery = '';
 
   final List<Dealer> _dealers = [
-    Dealer(id: "D-902", name: "Sikander Gohar Estates", agencyName: "Gohar Corporate Partners", phone: "+92 321 029102", email: "s@gohar.com", cnic: "35102-1290321-1", regNo: "REG-SHS-991", isVerified: false),
-    Dealer(id: "D-903", name: "DHA Platinum Builders", agencyName: "Platinum Housing Solutions", phone: "+92 331 445511", email: "info@plat.com", cnic: "35102-0091029-4", regNo: "REG-SHS-452", isVerified: true),
+    Dealer(
+      id: 'REG-SHS-991',
+      agencyName: 'Sikander Gohar Estates',
+      corporatePartner: 'Gohar Corporate Partners',
+      cell: '+92 321 029102',
+      cnic: '35102-1290321-1',
+      status: Status.pending,
+    ),
+    Dealer(
+      id: 'REG-SHS-452',
+      agencyName: 'DHA Platinum Builders',
+      corporatePartner: 'Platinum Housing Solutions',
+      cell: '+92 331 445511',
+      cnic: '35102-0091029-4',
+      status: Status.verified,
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _dealers.where((d) => d.name.toLowerCase().contains(_term.toLowerCase()) || d.agencyName.toLowerCase().contains(_term.toLowerCase())).toList();
+    final filteredDealers = _dealers.where((dealer) {
+      return dealer.agencyName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          dealer.id.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F3FF),
+      backgroundColor: AppTheme.lightLavender,
       appBar: AppBar(
-        title: const Text('Verify Agency Dealers', style: TextStyle(color: Color(0xFF1F1F39), fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
+        title: const Text('DEALER VERIFICATION'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1F1F39), size: 18),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Column(
         children: [
+          // Search box
           Container(
-            color: Colors.white,
             padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
+            ),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(color: const Color(0xFFF5F3FF), borderRadius: BorderRadius.circular(16)),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: AppTheme.lightLavender,
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: TextField(
                 onChanged: (val) {
                   setState(() {
-                    _term = val;
+                    _searchQuery = val;
                   });
                 },
                 decoration: const InputDecoration(
-                  icon: Icon(Icons.handshake_outlined, color: Color(0xFF8E8EA9)),
-                  hintText: "Search dealer name or agency registration...",
+                  icon: Icon(Icons.search, color: AppTheme.greyText),
+                  hintText: 'Search authorized broker agencies...',
+                  hintStyle: TextStyle(color: AppTheme.greyText),
                   border: InputBorder.none,
                 ),
               ),
             ),
           ),
+
+          // Dealer Cards list
           Expanded(
-            child: filtered.isEmpty
-                ? const Center(child: Text('No dealers in registration queue.'))
+            child: filteredDealers.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.gavel_outlined, size: 64, color: AppTheme.greyText),
+                  SizedBox(height: 12),
+                  Text('No Dealers Found', style: TextStyle(fontWeight: FontWeight.bold, color: AppTheme.darkText)),
+                ],
+              ),
+            )
                 : ListView.builder(
               padding: const EdgeInsets.all(20),
-              itemCount: filtered.length,
+              itemCount: filteredDealers.length,
               itemBuilder: (context, index) {
-                final d = filtered[index];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(d.regNo, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF7B4DFF), fontSize: 11)),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: d.isVerified ? const Color(0xFF22C55E).withOpacity(0.08) : const Color(0xFFF59E0B).withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
-                            child: Text(d.isVerified ? 'VERIFIED' : 'AWAITING APPROVAL', style: TextStyle(color: d.isVerified ? const Color(0xFF22C55E) : const Color(0xFFF59E0B), fontSize: 8, fontWeight: FontWeight.bold)),
-                          )
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(d.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1F1F39))),
-                      Text(d.agencyName, style: const TextStyle(color: Color(0xFF8E8EA9), fontSize: 12)),
-                      const Divider(height: 24, color: Color(0xFFF5F3FF)),
-                      Row(
-                        children: [
-                          const Icon(Icons.phone, size: 14, color: Color(0xFF8E8EA9)),
-                          const SizedBox(width: 6),
-                          Text(d.phone, style: const TextStyle(color: Color(0xFF1F1F39), fontSize: 12)),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      if (!d.isVerified)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    final idx = _dealers.indexWhere((it) => it.id == d.id);
-                                    if (idx != -1) {
-                                      _dealers[idx] = Dealer(id: d.id, name: d.name, agencyName: d.agencyName, phone: d.phone, email: d.email, cnic: d.cnic, regNo: d.regNo, isVerified: true);
-                                    }
-                                  });
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dealer agency approved.'), backgroundColor: Color(0xFF22C55E)));
-                                },
-                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF22C55E), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                                child: const Text('Approve Agency', style: TextStyle(color: Colors.white, fontSize: 12)),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(Icons.cancel_outlined, color: Color(0xFFEF4444)),
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verification registry deleted.')));
-                              },
-                            )
-                          ],
-                        )
-                    ],
-                  ),
-                );
+                final dealer = filteredDealers[index];
+                return _buildDealerCard(dealer);
               },
             ),
-          )
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDealerCard(Dealer dealer) {
+    final isPending = dealer.status == Status.pending;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  dealer.id,
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppTheme.greyText),
+                ),
+                _buildVerifyBadge(dealer.status),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              dealer.agencyName,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.darkText),
+            ),
+            Text(
+              dealer.corporatePartner,
+              style: const TextStyle(fontSize: 13, color: AppTheme.greyText, fontWeight: FontWeight.w500),
+            ),
+            const Divider(height: 24, color: AppTheme.lightLavender),
+            _buildDealerInfoRow('Cell:', dealer.cell),
+            _buildDealerInfoRow('Ident (CNIC):', dealer.cnic),
+            if (isPending) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    _showApproveDialog(dealer);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.success.withOpacity(0.1),
+                    foregroundColor: AppTheme.success,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 0,
+                  ),
+                  child: const Text('Approve Broker Registration', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerifyBadge(Status status) {
+    Color bg;
+    Color fg;
+    String text;
+
+    if (status == Status.pending) {
+      bg = AppTheme.warning.withOpacity(0.1);
+      fg = AppTheme.warning;
+      text = 'PENDING VERIFY';
+    } else {
+      bg = AppTheme.success.withOpacity(0.1);
+      fg = AppTheme.success;
+      text = 'VERIFIED';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: fg),
+      ),
+    );
+  }
+
+  Widget _buildDealerInfoRow(String label, String val) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Text(label, style: const TextStyle(color: AppTheme.greyText, fontSize: 13, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 8),
+          Text(val, style: const TextStyle(color: AppTheme.darkText, fontSize: 13, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  void _showApproveDialog(Dealer dealer) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Approve Broker Agency'),
+        content: Text('Are you sure you want to verify and authorize ${dealer.agencyName}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                dealer.status = Status.verified;
+              });
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${dealer.agencyName} is now authorized!'),
+                  backgroundColor: AppTheme.success,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.success),
+            child: const Text('Approve', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
     );

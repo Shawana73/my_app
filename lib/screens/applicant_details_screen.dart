@@ -1,275 +1,326 @@
+// lib/screens/applicant_details_screen.dart
+
 import 'package:flutter/material.dart';
-import '../models/society_models.dart';
+import '../theme.dart';
+import '../models.dart';
 
 class ApplicantDetailsScreen extends StatelessWidget {
   final Applicant applicant;
+  final Function(Status) onStatusChanged;
 
-  const ApplicantDetailsScreen({Key? key, required this.applicant}) : super(key: key);
+  const ApplicantDetailsScreen({
+    super.key,
+    required this.applicant,
+    required this.onStatusChanged,
+  });
+
+  get black54 => null;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F3FF),
+      backgroundColor: AppTheme.lightLavender,
       appBar: AppBar(
-        title: const Text('Applicant Portfolio', style: TextStyle(color: Color(0xFF1F1F39), fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1F1F39), size: 18),
-          onPressed: () => Navigator.pop(context),
-        ),
+        title: const Text('DOSSIER DETAILS'),
       ),
       body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            _buildProfileCard(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            // Header Profile Card
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: AppTheme.primaryPurple.withOpacity(0.1),
+                      child: Text(
+                        applicant.name.substring(0, 2).toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primaryPurple,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      applicant.name,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkText,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      applicant.id,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppTheme.primaryPurple,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildStatusBadge(applicant.status),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Personal Information Card
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Personal Information',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkText,
+                      ),
+                    ),
+                    const Divider(height: 24, color: AppTheme.lightLavender),
+                    _buildInfoRow('Full Name', applicant.name),
+                    _buildInfoRow('CNIC Number', applicant.cnic),
+                    _buildInfoRow('Phone Number', applicant.phone),
+                    _buildInfoRow('Email Address', applicant.email),
+                    _buildInfoRow('Requested Sector', applicant.requestedSector),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Uploaded Documents Section
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Documents Dossier',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.darkText,
+                      ),
+                    ),
+                    const Divider(height: 24, color: AppTheme.lightLavender),
+                    _buildDocCard(context, 'CNIC Front & Back Image', Icons.credit_card_outlined),
+                    const SizedBox(height: 12),
+                    _buildDocCard(context, 'DHA Registry Application Form', Icons.description_outlined),
+                    const SizedBox(height: 12),
+                    _buildDocCard(context, 'Domicile Certificate', Icons.verified_user_outlined),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Approve & Reject Buttons (if pending)
+            if (applicant.status == Status.pending)
+              Row(
                 children: [
-                  _buildSectionLabel('PERSONAL CREDENTIALS'),
-                  const SizedBox(height: 10),
-                  _buildDetailsBox(),
-                  const SizedBox(height: 24),
-                  _buildSectionLabel('REGISTRATION ATTACHMENTS'),
-                  const SizedBox(height: 10),
-                  _buildDocumentViewer(context),
-                  const SizedBox(height: 30),
-                  _buildCommandButtons(context),
-                  const SizedBox(height: 50),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        onStatusChanged(Status.rejected);
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Applicant Rejected'),
+                            backgroundColor: AppTheme.rejected,
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.rejected.withOpacity(0.1),
+                        foregroundColor: AppTheme.rejected,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text('Reject Dossier', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        onStatusChanged(Status.verified);
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Applicant Approved and Verified'),
+                            backgroundColor: AppTheme.success,
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryPurple,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text('Approve Registration', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 ],
               ),
-            )
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileCard() {
-    return Container(
-      width: double.infinity,
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 26, horizontal: 20),
-      child: Column(
+  Widget _buildInfoRow(String title, String val) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Hero(
-            tag: applicant.id,
-            child: CircleAvatar(
-              radius: 54,
-              backgroundColor: const Color(0xFF7B4DFF).withOpacity(0.08),
-              child: CircleAvatar(
-                radius: 48,
-                backgroundColor: const Color(0xFF7B4DFF).withOpacity(0.2),
-                child: Text(
-                  applicant.name.substring(0, 1),
-                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF7B4DFF)),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            applicant.name,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1F1F39)),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            applicant.id,
-            style: const TextStyle(fontSize: 14, color: Color(0xFF7B4DFF), fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          _buildStatusBadge(),
+          Text(title, style: const TextStyle(color: AppTheme.greyText, fontSize: 13, fontWeight: FontWeight.bold)),
+          Text(val, style: const TextStyle(color: AppTheme.darkText, fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 
-  Widget _buildStatusBadge() {
-    Color bColor = const Color(0xFFF59E0B);
-    String txt = "Pending Verification";
-    if (applicant.status == ApplicantStatus.verified) {
-      bColor = const Color(0xFF22C55E);
-      txt = "Official Resident";
-    }
-    if (applicant.status == ApplicantStatus.rejected) {
-      bColor = const Color(0xFFEF4444);
-      txt = "Application Declined";
+  Widget _buildDocCard(BuildContext context, String name, IconData icon) {
+    return InkWell(
+      onTap: () {
+        _showImagePreviewDialog(context, name);
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.lightLavender,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppTheme.primaryPurple),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                name,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.darkText),
+              ),
+            ),
+            const Icon(Icons.remove_red_eye_outlined, color: AppTheme.greyText, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(Status status) {
+    Color bg;
+    Color fg;
+    String text;
+
+    switch (status) {
+      case Status.pending:
+        bg = AppTheme.warning.withOpacity(0.1);
+        fg = AppTheme.warning;
+        text = 'PENDING';
+        break;
+      case Status.verified:
+        bg = AppTheme.success.withOpacity(0.1);
+        fg = AppTheme.success;
+        text = 'VERIFIED';
+        break;
+      case Status.rejected:
+        bg = AppTheme.rejected.withOpacity(0.1);
+        fg = AppTheme.rejected;
+        text = 'REJECTED';
+        break;
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: bColor.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(30),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(12)),
       child: Text(
-        txt,
-        style: TextStyle(color: bColor, fontWeight: FontWeight.bold, fontSize: 12),
+        text,
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: fg),
       ),
     );
   }
 
-  Widget _buildSectionLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: Color(0xFF8E8EA9),
-        fontSize: 11,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1.2,
-      ),
-    );
-  }
-
-  Widget _buildDetailsBox() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          _buildFieldRow('Full Name', applicant.name),
-          const Divider(height: 24, color: Color(0xFFF5F3FF)),
-          _buildFieldRow('CNIC Number', applicant.cnic),
-          const Divider(height: 24, color: Color(0xFFF5F3FF)),
-          _buildFieldRow('Email', applicant.email),
-          const Divider(height: 24, color: Color(0xFFF5F3FF)),
-          _buildFieldRow('Phone Number', applicant.phone),
-          const Divider(height: 24, color: Color(0xFFF5F3FF)),
-          _buildFieldRow('Requested Zone', applicant.sector),
-          const Divider(height: 24, color: Color(0xFFF5F3FF)),
-          _buildFieldRow('Application Date', applicant.applicationDate),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFieldRow(String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: const TextStyle(color: Color(0xFF8E8EA9), fontSize: 12)),
-        Text(value, style: const TextStyle(color: Color(0xFF1F1F39), fontWeight: FontWeight.bold, fontSize: 12)),
-      ],
-    );
-  }
-
-  Widget _buildDocumentViewer(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Row(
-                children: [
-                  Icon(Icons.description_outlined, color: Color(0xFF7B4DFF)),
-                  SizedBox(width: 8),
-                  Text(
-                    'National_ID_Card.jpg',
-                    style: TextStyle(color: Color(0xFF1F1F39), fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                ],
-              ),
-              IconButton(
-                icon: const Icon(Icons.open_in_new, color: Color(0xFF7B4DFF), size: 18),
-                onPressed: () {
-                  _showLightBox(context);
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          InkWell(
-            onTap: () => _showLightBox(context),
-            child: Container(
-              height: 140,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: const Color(0xFFF5F3FF),
-                image: const DecorationImage(
-                  image: NetworkImage('https://images.unsplash.com/photo-1554034483-04fda0d3507b'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  void _showLightBox(BuildContext context) {
+  void _showImagePreviewDialog(BuildContext context, String docName) {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          width: double.maxFinite,
-          height: 300,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            image: const DecorationImage(
-              image: NetworkImage('https://images.unsplash.com/photo-1554034483-04fda0d3507b'),
-              fit: BoxFit.cover,
-            ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      docName,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Simulated Document Picture with a beautiful gradient
+              Container(
+                height: 200,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF8E9EAB), Color(0xFFEEF2F3)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),            ),
+                alignment: Alignment.center,
+                child:  Text(
+                  'CNIC / Registry Document Scan Verified',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, shadows: [
+                    Shadow(color: Colors.black.withOpacity(0.24), blurRadius: 4, offset: Offset(0, 2)),
+                  ]),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Downloading $docName...')),
+                  );
+                },
+                icon: const Icon(Icons.download, color: Colors.white),
+                label: const Text('Download Original File', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryPurple,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildCommandButtons(BuildContext context) {
-    if (applicant.status != ApplicantStatus.pending) return const SizedBox.shrink();
-
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Applicant approved for society quota.'), backgroundColor: Color(0xFF22C55E)),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF22C55E),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              elevation: 0,
-            ),
-            child: const Text('Verify Resident', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          ),
-        ),
-        const SizedBox(width: 12),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Applicant has been declined.'), backgroundColor: Color(0xFFEF4444)),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFEF4444).withOpacity(0.08),
-            foregroundColor: const Color(0xFFEF4444),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-            elevation: 0,
-          ),
-          child: const Icon(Icons.cancel_outlined),
-        )
-      ],
     );
   }
 }
